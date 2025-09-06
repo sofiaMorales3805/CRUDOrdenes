@@ -1,4 +1,6 @@
-﻿namespace Api;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Api.Models;
 
 public class Item
 {

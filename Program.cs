@@ -1,4 +1,8 @@
-using backend.Data;
+using Api.Models;
+using Api.Data;
+using Api.Services;
+using Api.Repositories;
+using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,13 +17,19 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 //DbContext (SQL Server) — toma la cadena de appsettings.json  que configure mi base de datos
-builder.Services.AddDbContext<AppDbContext>(opt =>
-    opt.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// 4) CORS (para Angular en http://localhost:4200)
+// Inyección de dependencias (services + repositories)
+builder.Services.AddScoped<IPersonService, PersonService>();
+builder.Services.AddScoped<IPersonRepository, PersonRepository>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+
+// CORS (para Angular en http://localhost:4200)
 const string CorsPolicy = "_allowAngular";
-builder.Services.AddCors(opt =>
-    opt.AddPolicy(CorsPolicy, p =>
+builder.Services.AddCors(options =>
+    options.AddPolicy(CorsPolicy, p =>
         p.WithOrigins("http://localhost:4200")
          .AllowAnyHeader()
          .AllowAnyMethod()
@@ -37,6 +47,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseAuthorization();
+app.UseCors(CorsPolicy);
+app.MapControllers();
 
 var summaries = new[]
 {
@@ -45,7 +58,7 @@ var summaries = new[]
 
 app.MapGet("/weatherforecast", () =>
 {
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
+    var forecast = Enumerable.Range(1, 5).Select(index =>
         new WeatherForecast
         (
             DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
