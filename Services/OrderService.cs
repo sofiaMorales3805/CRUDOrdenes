@@ -3,6 +3,7 @@ using Api.Models;
 using Api.Models.Dtos;
 using Api.Repositories;
 using Api.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace Api.Services;
 public class OrderService : IOrderService
@@ -14,7 +15,7 @@ public class OrderService : IOrderService
         _context = context;
     }
 
-    // ✅ GET: Obtener todas las órdenes
+    // todas las órdenes
     public async Task<IEnumerable<OrderReadDto>> GetAllOrdersAsync()
     {
         var orders = await _context.Orders
@@ -32,28 +33,26 @@ public class OrderService : IOrderService
             UpdatedBy = o.UpdatedBy,
             UpdatedAt = o.UpdatedAt,
 
-            // 👇 mapear la persona
-            Person = new PersonReadDto
-            {
-                PersonId = o.Person.PersonId,
-                FirstName = o.Person.FirstName,
-                LastName = o.Person.LastName,
-                Email = o.Person.Email
+            // mapear la persona
+            Person = new PersonReadDto {
+                PersonId = order.Person.PersonId,
+                FirstName = order.Person.FirstName,
+                LastName = order.Person.LastName,
+                Email = order.Person.Email
             },
 
-            // 👇 mapear detalles
-            OrderDetails = o.OrderDetails.Select(od => new OrderDetailReadDto
-            {
-                ItemId = od.ItemId,
-                ItemName = od.Item.Name,
-                Quantity = od.Quantity,
-                Price = od.Price,
-                Total = od.Total
+            // mapear detalles
+            OrderDetails = order.OrderDetails.Select(d => new OrderDetailReadDto {
+            ItemId = d.ItemId,
+            ItemName = d.Item.Name,
+            Quantity = d.Quantity,
+            Price = d.Price,
+            Total = d.Total
             }).ToList()
-        });
+         });
     }
 
-    // ✅ POST: Crear una orden
+    // Crear una orden
     public async Task<OrderReadDto> CreateOrderAsync(OrderCreateDto dto)
     {
         var order = new Order
@@ -105,7 +104,7 @@ public class OrderService : IOrderService
         };
     }
 
-    // ✅ DELETE: Eliminar una orden
+    //DELETE: Eliminar una orden
     public async Task<bool> DeleteOrderAsync(int id)
     {
         var order = await _context.Orders
